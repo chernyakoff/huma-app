@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS users (
+  id integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+  email TEXT NOT NULL,
+  password TEXT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  is_admin BOOLEAN NOT NULL CHECK (is_admin IN (0, 1)),
+  UNIQUE (email)
+);
