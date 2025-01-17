@@ -5,10 +5,10 @@ go 1.23.4
 require (
 	github.com/danielgtaylor/huma/v2 v2.27.0
 	github.com/go-chi/chi/v5 v5.2.0
+	github.com/go-chi/cors v1.2.1
 	github.com/go-chi/httplog/v2 v2.1.1
 	github.com/golang-migrate/migrate/v4 v4.18.1
 	github.com/joho/godotenv v1.5.1
-	github.com/lmittmann/tint v1.0.6
 	golang.org/x/crypto v0.32.0
 	modernc.org/sqlite v1.34.4
 )

@@ -43,7 +43,7 @@ func (rs *UserResource) RegisterLogin(api huma.API) {
 		OperationID: "login",
 		Summary:     "Login",
 		Method:      http.MethodPost,
-		Path:        "/api/login",
+		Path:        "/api/auth/login",
 		Tags:        []string{"Auth"},
 	}, func(ctx context.Context, input *LoginInput) (*LoginOutput, error) {
 
@@ -80,10 +80,10 @@ type Dummy struct{}
 
 func (rs *UserResource) RegisterMe(api huma.API) {
 	huma.Register(api, huma.Operation{
-		OperationID: "profile",
-		Summary:     "Profile",
+		OperationID: "me",
+		Summary:     "Me",
 		Method:      http.MethodGet,
-		Path:        "/api/profile",
+		Path:        "/api/auth/me",
 		Tags:        []string{"Auth"},
 		Security: []map[string][]string{
 			{"Bearer": {}},
@@ -109,7 +109,7 @@ func (rs *UserResource) RegisterLogout(api huma.API) {
 		OperationID: "logout",
 		Summary:     "Logout",
 		Method:      http.MethodGet,
-		Path:        "/api/logout",
+		Path:        "/api/auth/logout",
 		Tags:        []string{"Auth"},
 		Security: []map[string][]string{
 			{"Bearer": {}},

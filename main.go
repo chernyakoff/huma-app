@@ -9,6 +9,8 @@ import (
 	"huma-app/store"
 	"log/slog"
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -16,9 +18,35 @@ import (
 	"github.com/danielgtaylor/huma/v2/humacli"
 	"github.com/go-chi/chi/v5"
 	chim "github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 	"github.com/go-chi/httplog/v2"
 	"github.com/joho/godotenv"
+	"github.com/spf13/cobra"
 )
+
+const staticPath = "frontend/dist"
+const indexPath = "index.html"
+
+var api huma.API
+
+type spaHandler struct {
+	staticPath string
+	indexPath  string
+}
+
+func (h spaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	path := filepath.Join(staticPath, r.URL.Path)
+	fi, err := os.Stat(path)
+	if os.IsNotExist(err) || fi.IsDir() {
+		http.ServeFile(w, r, filepath.Join(staticPath, indexPath))
+		return
+	}
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	http.FileServer(http.Dir(staticPath)).ServeHTTP(w, r)
+}
 
 //go:generate sqlc generate
 
@@ -39,17 +67,29 @@ func main() {
 	}
 
 	cli := humacli.New(func(hooks humacli.Hooks, opts *Options) {
-		//setupLogger(opts)
+
 		logger := setupLogger(opts)
+
 		mux := chi.NewMux()
+		mux.Use(cors.Handler(cors.Options{
+			// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
+			AllowedOrigins: []string{"https://*", "http://*"},
+			// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
+			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+			AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+			ExposedHeaders:   []string{"Link"},
+			AllowCredentials: true,
+			MaxAge:           300, // Maximum value not ignored by any of major browsers
+		}))
+
 		mux.Use(chim.Heartbeat("/ping"))
 		mux.Use(httplog.RequestLogger(logger))
 
-		mux.Handle("/zopa/*", http.FileServer(http.Dir("./frontend/build")))
-
 		db := store.InitDB(opts.StoragePath)
-
 		store := store.New(db)
+		security := security.NewSecurity(opts.JwtKey)
+		users := controller.NewUserResource(store, security)
+
 		config := huma.DefaultConfig(opts.Name, opts.Version)
 		config.DocsPath = "/api/docs"
 		config.Components.SecuritySchemes = map[string]*huma.SecurityScheme{
@@ -60,16 +100,22 @@ func main() {
 				In:           "cookie",
 			},
 		}
-		security := security.NewSecurity(opts.JwtKey)
-		api := humachi.New(mux, config)
+
+		api = humachi.New(mux, config)
 		api.UseMiddleware(middleware.JwtAuthMiddleware(api, security))
-		users := controller.NewUserResource(store, security)
+
 		huma.AutoRegister(api, users)
+
+		/* spa := spaHandler{staticPath: "frontend/build", indexPath: "index.html"}
+		mux.Handle("/*", spa) */
+
 		server := http.Server{
 			Addr:    fmt.Sprintf(":%d", opts.Port),
 			Handler: mux,
 		}
+
 		slog.Info("Server started on ", "localhost:", opts.Port)
+
 		hooks.OnStart(func() {
 			server.ListenAndServe()
 		})
@@ -81,6 +127,33 @@ func main() {
 			db.Close()
 		})
 
+	})
+	cli.Root().AddCommand(&cobra.Command{
+		Use:   "openapi",
+		Short: "Print the OpenAPI spec",
+		Run: func(cmd *cobra.Command, args []string) {
+			b, err := api.OpenAPI().YAML()
+			if err != nil {
+				panic(err)
+			}
+			path := "openapi.yaml"
+			f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+
+			if err != nil {
+				panic(err)
+			}
+			_, err = f.Write(b)
+			if err != nil {
+				panic(err)
+			}
+
+			err = f.Close()
+			if err != nil {
+				panic(err)
+			}
+
+			fmt.Printf("spec saved to %s", path)
+		},
 	})
 	cli.Run()
 
