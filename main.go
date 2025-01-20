@@ -24,7 +24,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const staticPath = "frontend/dist"
+const staticPath = "frontend/build"
 const indexPath = "index.html"
 
 var api huma.API
@@ -35,17 +35,17 @@ type spaHandler struct {
 }
 
 func (h spaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	path := filepath.Join(staticPath, r.URL.Path)
+	path := filepath.Join(h.staticPath, r.URL.Path)
 	fi, err := os.Stat(path)
 	if os.IsNotExist(err) || fi.IsDir() {
-		http.ServeFile(w, r, filepath.Join(staticPath, indexPath))
+		http.ServeFile(w, r, filepath.Join(h.staticPath, h.indexPath))
 		return
 	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	http.FileServer(http.Dir(staticPath)).ServeHTTP(w, r)
+	http.FileServer(http.Dir(h.staticPath)).ServeHTTP(w, r)
 }
 
 //go:generate sqlc generate
@@ -92,6 +92,10 @@ func main() {
 
 		config := huma.DefaultConfig(opts.Name, opts.Version)
 		config.DocsPath = "/api/docs"
+		/* config.CreateHooks = []func(huma.Config) huma.Config{
+		func(c huma.Config) huma.Config {
+			return c
+		}} */
 		config.Components.SecuritySchemes = map[string]*huma.SecurityScheme{
 			"Bearer": {
 				Type:         "http",
@@ -105,9 +109,8 @@ func main() {
 		api.UseMiddleware(middleware.JwtAuthMiddleware(api, security))
 
 		huma.AutoRegister(api, users)
-
-		/* spa := spaHandler{staticPath: "frontend/build", indexPath: "index.html"}
-		mux.Handle("/*", spa) */
+		spa := spaHandler{staticPath: staticPath, indexPath: indexPath}
+		mux.Handle("/*", spa)
 
 		server := http.Server{
 			Addr:    fmt.Sprintf(":%d", opts.Port),
@@ -132,11 +135,11 @@ func main() {
 		Use:   "openapi",
 		Short: "Print the OpenAPI spec",
 		Run: func(cmd *cobra.Command, args []string) {
-			b, err := api.OpenAPI().YAML()
+			b, err := api.OpenAPI().MarshalJSON()
 			if err != nil {
 				panic(err)
 			}
-			path := "openapi.yaml"
+			path := "openapi.json"
 			f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 
 			if err != nil {
@@ -152,7 +155,7 @@ func main() {
 				panic(err)
 			}
 
-			fmt.Printf("spec saved to %s", path)
+			fmt.Printf("spec saved to %s\n", path)
 		},
 	})
 	cli.Run()

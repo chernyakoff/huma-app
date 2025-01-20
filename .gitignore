@@ -1,1 +1,3 @@
 openapi.yaml
+openapi.json
+./frontend/src/lib/client
