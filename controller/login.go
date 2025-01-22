@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"huma-app/store"
+	"huma-app/store/types"
 	"net/http"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -20,8 +21,8 @@ type LoginInput struct {
 }
 
 type LoginOutput struct {
-	Status    int
 	SetCookie http.Cookie `header:"Set-Cookie"`
+	Status    int
 }
 
 type LogoutOutput struct {
@@ -31,7 +32,7 @@ type LogoutOutput struct {
 type AuthHeader struct {
 	Session http.Cookie `cookie:"jwt"`
 	UserId  int64       `hidden:"true"`
-	IsAdmin bool        `hidden:"true"`
+	Role    types.Role  `hidden:"true"`
 }
 
 type ProfileOutput struct {
@@ -45,6 +46,9 @@ func (rs *UserResource) RegisterLogin(api huma.API) {
 		Method:      http.MethodPost,
 		Path:        "/api/auth/login",
 		Tags:        []string{"Auth"},
+		Errors: []int{
+			http.StatusUnauthorized,
+		},
 	}, func(ctx context.Context, input *LoginInput) (*LoginOutput, error) {
 
 		user, err := rs.repo.GetUserByEmail(ctx, input.Body.Email)
@@ -57,20 +61,19 @@ func (rs *UserResource) RegisterLogin(api huma.API) {
 		if err != nil {
 			return nil, huma.Error401Unauthorized("Wrong password or email")
 		}
-		cookie, _ := rs.security.GenerateTokenToCookies(user.ID, user.IsAdmin)
+		cookie, _ := rs.security.GenerateTokenToCookies(user.ID, user.Role)
+
 		return &LoginOutput{
-			Status:    204,
 			SetCookie: *cookie,
+			Status:    http.StatusNoContent,
 		}, nil
 
 	})
 }
 
 func (m *AuthHeader) Resolve(ctx huma.Context) []error {
-
 	m.UserId, _ = ctx.Context().Value("user_id").(int64)
-	m.IsAdmin, _ = ctx.Context().Value("user_id").(bool)
-
+	m.Role, _ = ctx.Context().Value("user_role").(types.Role)
 	return nil
 }
 

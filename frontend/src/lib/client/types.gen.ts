@@ -55,12 +55,14 @@ export type ErrorModel = {
 export type GetUserByIdRow = {
     email: string;
     id: number;
+    role: string;
 };
 
 export type GetUsersRow = {
     created_at: string;
     email: string;
     id: number;
+    role: string;
 };
 
 export type LoginInputBody = {
@@ -77,9 +79,17 @@ export type LoginData = {
 
 export type LoginErrors = {
     /**
-     * Error
+     * Unauthorized
      */
-    default: ErrorModel;
+    401: ErrorModel;
+    /**
+     * Unprocessable Entity
+     */
+    422: ErrorModel;
+    /**
+     * Internal Server Error
+     */
+    500: ErrorModel;
 };
 
 export type LoginError = LoginErrors[keyof LoginErrors];

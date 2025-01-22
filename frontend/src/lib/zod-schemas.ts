@@ -17,16 +17,12 @@ export const userSchema = z.object({
         })
         .trim(),
     confirmPassword: z
-        .string({ required_error: 'Password is required' })
-        .min(6, { message: 'Password must be at least 6 characters' })
-        .regex(passwordValidation, {
-            message: 'Your password is not valid',
-        })
+        .string({ required_error: 'Password confirm is required' })
         .trim(),
     //terms: z.boolean({ required_error: 'You must accept the terms and privacy policy' }),
     role: z
-        .enum(['USER', 'PREMIUM', 'ADMIN'], { required_error: 'You must have a role' })
-        .default('USER'),
+        .enum(['user', 'editor', 'admin'], { required_error: 'You must have a role' })
+        .default('admin'),
     verified: z.boolean().default(false),
     terms: z.literal<boolean>(true, {
         errorMap: () => ({ message: "You must accept the terms & privacy policy" }),
@@ -44,12 +40,7 @@ export const registerSchema = userSchema.pick({ email: true, password: true, con
     if (confirmPassword !== password) {
         ctx.addIssue({
             code: 'custom',
-            message: 'Password and Confirm Password must match',
-            path: ['password']
-        });
-        ctx.addIssue({
-            code: 'custom',
-            message: 'Password and Confirm Password must match',
+            message: 'Passwords must match',
             path: ['confirmPassword']
         });
     }

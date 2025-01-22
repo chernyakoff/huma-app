@@ -13,28 +13,17 @@ import (
 	"github.com/golang-migrate/migrate/v4/source/iofs"       // Migration files
 	_ "modernc.org/sqlite"
 
+	"huma-app/lib/config"
 	"huma-app/store/migrations"
 )
 
-// InitDB initialize the database.
-// SchemaPath is imported from schema.sql
-func InitDB(path string) *sql.DB {
-	db, err := sql.Open("sqlite", path)
-	if err != nil {
-		slog.Error("cannot open db connection", "err", err)
-	}
-
-	err = db.Ping()
-	if err != nil {
-		slog.Error("cannot ping db", "err", err)
-	}
-
+func Migrate() {
 	d, err := iofs.New(migrations.FS, ".")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	m, err := migrate.NewWithSourceInstance("embed://", d, "sqlite://"+path)
+	m, err := migrate.NewWithSourceInstance("embed://", d, "sqlite://"+config.Get().Storage.Path)
 	if err != nil {
 		slog.Error("cannot migrate db", "err", err)
 		panic("cannot migrate db")
@@ -49,14 +38,26 @@ func InitDB(path string) *sql.DB {
 
 			panic("database migration failed")
 		}
-		slog.Info("", slog.String("database", "migrating: success"))
+		slog.Info("Database migrating: success")
 	} else {
-		slog.Info("", slog.String("database", "migrating: no change required"))
+		slog.Info("Database migrating: no change required")
+	}
+	slog.Info("Database initialized")
+}
+
+func InitDB() *sql.DB {
+	db, err := sql.Open("sqlite", config.Get().Storage.Path)
+	if err != nil {
+		slog.Error("cannot open db connection", "err", err)
 	}
 
-	slog.Info("Database connected", "address", path)
+	err = db.Ping()
+	if err != nil {
+		slog.Error("cannot ping db", "err", err)
+	}
 
-	slog.Info("Database initialized")
+	slog.Info("Database connected: " + config.Get().Storage.Path)
+	Migrate()
 
 	return db
 }

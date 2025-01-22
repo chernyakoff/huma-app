@@ -1,0 +1,11 @@
+server:
+  port: 8888
+  host: localhost
+  spa: ./frontend/build/index.html
+storage:
+  path: ./storage.db
+secret:
+  jwt: x4FwcP65Jc1VJyMbpun
+api:
+  name: Huma API
+  version: 1.0.1

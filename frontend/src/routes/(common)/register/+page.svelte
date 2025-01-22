@@ -1,9 +1,9 @@
 <script lang="ts">
 	import TextInput from "$lib/components/ui/form/TextInput.svelte";
-	import { loginSchema } from "$lib/zod-schemas";
+	import { registerSchema } from "$lib/zod-schemas";
 	import { superForm, setMessage, setError, defaults } from "sveltekit-superforms";
 	import { zod } from "sveltekit-superforms/adapters";
-	import { loginMutation } from "$lib/client/@tanstack/svelte-query.gen";
+	import { createUserMutation } from "$lib/client/@tanstack/svelte-query.gen";
 	import { goto } from "$app/navigation";
 	import { createMutation } from "@tanstack/svelte-query";
 	import Title from "$lib/components/layout/Title.svelte";
@@ -11,12 +11,13 @@
 
 	import * as toast from "$lib/toast";
 	import PasswordInput from "$lib/components/ui/form/PasswordInput.svelte";
+	import { fromJSON } from "postcss";
 
 	if (authState.valid) {
 		goto("/app");
 	}
 	const mutation = createMutation({
-		...loginMutation(),
+		...createUserMutation(),
 		onSuccess() {
 			goto("/app");
 		},
@@ -29,15 +30,18 @@
 	const superform = superForm(
 		{
 			email: "chernyakoff@gmail.com",
-			password: "12345aA-"
+			password: "12345aA-",
+			confirmPassword: "12345aA-"
 		},
 		{
 			SPA: true,
-			validators: zod(loginSchema),
+			validators: zod(registerSchema),
 			onUpdate({ form }) {
 				if (form.valid) {
-					$mutation.mutate({ body: form.data });
+					const { confirmPassword, ...data } = form.data;
+					$mutation.mutate({ body: data });
 				}
+				console.log(form);
 			}
 		}
 	);
@@ -49,20 +53,15 @@
 		<div class="card bg-base-100 shadow-sm">
 			<form class="card-body" method="POST" use:enhance>
 				<TextInput {superform} name="email" type="email" />
-				<PasswordInput {superform} />
-				<div class="form-control">
-					<label class="label" for="forgot">
-						<a href="/" class="link-hover link label-text-alt">Forgot password?</a>
-					</label>
-				</div>
+				<PasswordInput {superform} confirm={true} />
 				<div class="form-control mt-3">
-					<button type="submit" class="btn btn-primary text-white">Login</button>
+					<button type="submit" class="btn btn-primary text-white">Register</button>
 				</div>
 			</form>
 		</div>
 		<div class="mt-2 text-center">
 			<span class="label-text-alt"
-				>Don't have an account? <a href="/register" class="link-hover link link-success">Register</a
+				>Already have an account? <a href="/login" class="link-hover link link-success">Login</a
 				></span
 			>
 		</div>

@@ -37,7 +37,7 @@ func JwtAuthMiddleware(api huma.API, security *security.Security) func(ctx huma.
 		}
 
 		ctx = huma.WithValue(ctx, "user_id", claims.UserID)
-		ctx = huma.WithValue(ctx, "is_admin", claims.IsAdmin)
+		ctx = huma.WithValue(ctx, "user_role", claims.UserRole)
 
 		if len(anyOfNeededRoles) == 0 {
 			next(ctx)
@@ -45,7 +45,7 @@ func JwtAuthMiddleware(api huma.API, security *security.Security) func(ctx huma.
 		}
 
 		for _, role := range anyOfNeededRoles {
-			if role == "admin" && claims.IsAdmin {
+			if role == string(claims.UserRole) {
 				next(ctx)
 				return
 			}

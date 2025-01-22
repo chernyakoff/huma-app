@@ -4,10 +4,10 @@ import daisyui from 'daisyui';
 import typography from '@tailwindcss/typography';
 
 const config = {
-
+    darkMode: ['class', '[data-theme="dark"]'],
     daisyui: {
         themes: [
-            'nord', 'dark', 'cupcake'
+            'dark', 'nord'
         ]
     },
     content: [

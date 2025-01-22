@@ -1,3 +1,7 @@
+<script lang="ts">
+	import Title from "$lib/components/layout/Title.svelte";
+</script>
+
 <section class="body-font text-gray-600">
 	<div class="container mx-auto px-5 py-24">
 		<div class="mb-20 flex w-full flex-col text-center">

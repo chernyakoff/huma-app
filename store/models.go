@@ -6,12 +6,14 @@ package store
 
 import (
 	"time"
+
+	"huma-app/store/types"
 )
 
 type User struct {
-	ID        int64     `json:"id"`
-	Email     string    `format:"email" json:"email" required:"true"`
-	Password  string    `json:"password"`
-	CreatedAt time.Time `json:"created_at"`
-	IsAdmin   bool      `json:"is_admin"`
+	ID        int64      `json:"id"`
+	Email     string     `format:"email" json:"email" required:"true"`
+	Password  string     `json:"password"`
+	CreatedAt time.Time  `json:"created_at"`
+	Role      types.Role `json:"role"`
 }

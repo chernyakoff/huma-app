@@ -1,9 +1,26 @@
 <script lang="ts">
+	import { goto } from "$app/navigation";
+	import type { GetUserByIdRow } from "$lib/client";
+	import ThemeSwap from "$lib/components/ui/ThemeSwap.svelte";
+
+	import { authState } from "$lib/states.svelte";
+	import Icon from "@iconify/svelte";
+	import type { Snippet } from "svelte";
+
 	interface Props {
-		children?: import('svelte').Snippet;
+		children?: Snippet;
+		data?: {
+			user: GetUserByIdRow;
+		};
 	}
 
-	let { children }: Props = $props();
+	let { children, data }: Props = $props();
+
+	if (!data) {
+		goto("/login");
+	} else {
+		authState.set(data.user);
+	}
 </script>
 
 <div class="navbar bg-base-300">
@@ -26,7 +43,7 @@
 				</svg>
 			</div>
 			<ul class="menu dropdown-content menu-sm z-[1] mt-3 w-52 rounded-box bg-base-100 p-2 shadow">
-				<li><a href="/" tabindex="-1">Item 1</a></li>
+				<li><a href="/app/users" tabindex="-1">Юзеры</a></li>
 				<li>
 					<a href="/" tabindex="-2">Parent</a>
 					<ul class="p-2">
@@ -37,7 +54,7 @@
 				<li><a href="/" tabindex="-1">Item 3</a></li>
 			</ul>
 		</div>
-		<a href="/" tabindex="-1" class="btn btn-ghost text-xl">daisyUI</a>
+		<a href="/" tabindex="-1" class="btn btn-ghost text-xl">HUMA</a>
 	</div>
 	<div class="navbar-center hidden lg:flex">
 		<ul class="menu menu-horizontal px-1">
@@ -55,7 +72,12 @@
 		</ul>
 	</div>
 	<div class="navbar-end">
-		<a href="/" tabindex="-1" class="btn">Button</a>
+		<div class="flex gap-4 pr-4">
+			<a href="/logout" title="Logout">
+				<Icon icon="ph:sign-out-light" class="icon24" />
+			</a>
+			<ThemeSwap />
+		</div>
 	</div>
 </div>
 {@render children?.()}

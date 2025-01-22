@@ -1,8 +1,6 @@
 <script lang="ts">
-	import Meta from '$lib/components/layout/Meta.svelte';
+	import Title from "$lib/components/layout/Title.svelte";
 </script>
-
-<Meta title="Привет" />
 
 <div class="hero flex flex-grow items-center justify-center">
 	<div class="hero-content">

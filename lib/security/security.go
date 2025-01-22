@@ -3,6 +3,8 @@ package security
 import (
 	"errors"
 	"fmt"
+	"huma-app/lib/config"
+	"huma-app/store/types"
 	"net/http"
 	"time"
 
@@ -12,7 +14,7 @@ import (
 type AppToken struct {
 	jwt.RegisteredClaims // Required, this struct contains the standard claims
 	UserID               int64
-	IsAdmin              bool
+	UserRole             types.Role
 }
 
 var _ jwt.Claims = &AppToken{}
@@ -33,18 +35,18 @@ type Security struct {
 	ExpiresInterval time.Duration
 }
 
-func NewSecurity(secretKey string) *Security {
+func NewSecurity() *Security {
 	return &Security{
-		key:             []byte(secretKey),
+		key:             []byte(config.Get().Secret.Jwt),
 		Now:             time.Now,
 		ExpiresInterval: 24 * time.Hour,
 	}
 }
 
-func (security Security) GenerateToken(userID int64, isAdmin bool) (tokenString string, err error) {
+func (security Security) GenerateToken(userID int64, role types.Role) (tokenString string, err error) {
 	claims := AppToken{
-		UserID:  userID,
-		IsAdmin: isAdmin,
+		UserID:   userID,
+		UserRole: role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)), // Токен истекает через 24 часа
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -61,8 +63,8 @@ func (security Security) GenerateToken(userID int64, isAdmin bool) (tokenString 
 }
 
 // GenerateTokenToCookies generates a JWT token with the given claims and writes it to the cookies.
-func (security Security) GenerateTokenToCookies(userID int64, isAdmin bool) (*http.Cookie, error) {
-	token, err := security.GenerateToken(userID, isAdmin)
+func (security Security) GenerateTokenToCookies(userID int64, role types.Role) (*http.Cookie, error) {
+	token, err := security.GenerateToken(userID, role)
 	if err != nil {
 		return &http.Cookie{}, err
 	}

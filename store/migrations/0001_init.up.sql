@@ -3,6 +3,6 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT NOT NULL,
   password TEXT NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  is_admin BOOLEAN NOT NULL CHECK (is_admin IN (0, 1)),
+  role TEXT NOT NULL DEFAULT 'user' CHECK(role IN ('admin', 'user', 'editor')),
   UNIQUE (email)
 );

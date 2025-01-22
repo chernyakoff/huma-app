@@ -8,6 +8,8 @@ package store
 import (
 	"context"
 	"time"
+
+	"huma-app/store/types"
 )
 
 const createUser = `-- name: CreateUser :one
@@ -15,9 +17,9 @@ INSERT INTO users
 (
     email,
     password,
-    is_admin
+    role
 ) VALUES (
-    ?, ?, 0
+    ?, ?, "user"
 ) RETURNING id,email
 `
 
@@ -48,14 +50,14 @@ func (q *Queries) DeleteUser(ctx context.Context, id int64) error {
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, email, password, is_admin FROM users WHERE email = ? LIMIT 1
+SELECT id, email, password, role FROM users WHERE email = ? LIMIT 1
 `
 
 type GetUserByEmailRow struct {
-	ID       int64  `json:"id"`
-	Email    string `format:"email" json:"email" required:"true"`
-	Password string `json:"password"`
-	IsAdmin  bool   `json:"is_admin"`
+	ID       int64      `json:"id"`
+	Email    string     `format:"email" json:"email" required:"true"`
+	Password string     `json:"password"`
+	Role     types.Role `json:"role"`
 }
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error) {
@@ -65,7 +67,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEm
 		&i.ID,
 		&i.Email,
 		&i.Password,
-		&i.IsAdmin,
+		&i.Role,
 	)
 	return i, err
 }
@@ -73,29 +75,31 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEm
 const getUserById = `-- name: GetUserById :one
 ;
 
-SELECT id, email FROM users WHERE id = ? LIMIT 1
+SELECT id, email, role FROM users WHERE id = ? LIMIT 1
 `
 
 type GetUserByIdRow struct {
-	ID    int64  `json:"id"`
-	Email string `format:"email" json:"email" required:"true"`
+	ID    int64      `json:"id"`
+	Email string     `format:"email" json:"email" required:"true"`
+	Role  types.Role `json:"role"`
 }
 
 func (q *Queries) GetUserById(ctx context.Context, id int64) (GetUserByIdRow, error) {
 	row := q.db.QueryRowContext(ctx, getUserById, id)
 	var i GetUserByIdRow
-	err := row.Scan(&i.ID, &i.Email)
+	err := row.Scan(&i.ID, &i.Email, &i.Role)
 	return i, err
 }
 
 const getUsers = `-- name: GetUsers :many
-SELECT id, email, created_at FROM users
+SELECT id, email, role, created_at FROM users
 `
 
 type GetUsersRow struct {
-	ID        int64     `json:"id"`
-	Email     string    `format:"email" json:"email" required:"true"`
-	CreatedAt time.Time `json:"created_at"`
+	ID        int64      `json:"id"`
+	Email     string     `format:"email" json:"email" required:"true"`
+	Role      types.Role `json:"role"`
+	CreatedAt time.Time  `json:"created_at"`
 }
 
 func (q *Queries) GetUsers(ctx context.Context) ([]GetUsersRow, error) {
@@ -107,7 +111,12 @@ func (q *Queries) GetUsers(ctx context.Context) ([]GetUsersRow, error) {
 	var items []GetUsersRow
 	for rows.Next() {
 		var i GetUsersRow
-		if err := rows.Scan(&i.ID, &i.Email, &i.CreatedAt); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.Email,
+			&i.Role,
+			&i.CreatedAt,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

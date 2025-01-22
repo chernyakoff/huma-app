@@ -11,4 +11,6 @@ sql:
         overrides:
           - column: "users.email"
             go_struct_tag: 'required:"true" format:"email"'
+          - column: "users.role"
+            go_type: "huma-app/store/types.Role"
 
