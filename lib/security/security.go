@@ -8,18 +8,29 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/golang-jwt/jwt/v5"
 )
 
+var JWTCookieName = "jwt"
+
 type AppToken struct {
-	jwt.RegisteredClaims // Required, this struct contains the standard claims
-	UserID               int64
-	UserRole             types.Role
+	jwt.RegisteredClaims
+	UserID    uuid.UUID
+	UserRole  types.Role
+	TokenType TokenType
 }
 
 var _ jwt.Claims = &AppToken{}
 
-var JWTCookieName = "jwt"
+type TokenType string
+
+const (
+	AccessToken   TokenType = "access"
+	EmailToken    TokenType = "email"    // for verify email
+	PasswordToken TokenType = "password" // for password forgot
+)
 
 var (
 	ErrUnauthorized     = errors.New("unauthorized")
@@ -43,56 +54,24 @@ func NewSecurity() *Security {
 	}
 }
 
-func (security Security) GenerateToken(userID int64, role types.Role) (tokenString string, err error) {
+func (security Security) GenerateToken(tokenType TokenType, expiresIn time.Duration, userID uuid.UUID, userRole types.Role) (string, error) {
 	claims := AppToken{
-		UserID:   userID,
-		UserRole: role,
+		UserID:    userID,
+		UserRole:  userRole,
+		TokenType: tokenType,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)), // Токен истекает через 24 часа
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(expiresIn)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
 			Issuer:    "my-app",
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err = token.SignedString(security.key)
-	if err != nil {
-		return "", err
-	}
-	return tokenString, nil
+	return token.SignedString(security.key)
 }
 
-// GenerateTokenToCookies generates a JWT token with the given claims and writes it to the cookies.
-func (security Security) GenerateTokenToCookies(userID int64, role types.Role) (*http.Cookie, error) {
-	token, err := security.GenerateToken(userID, role)
-	if err != nil {
-		return &http.Cookie{}, err
-	}
-	return &http.Cookie{
-		Name:     JWTCookieName,
-		Value:    token,
-		Expires:  security.Now().Add(security.ExpiresInterval),
-		HttpOnly: true,
-		Path:     "/",
-		// SameSite: http.SameSiteStrictMode,
-		// Secure:   true,
-		MaxAge: int(security.ExpiresInterval.Seconds()),
-	}, nil
-}
-
-func (security Security) DeleteCookie() *http.Cookie {
-	return &http.Cookie{
-		Name:    JWTCookieName,
-		Value:   "",
-		Path:    "/",
-		Expires: security.Now(),
-	}
-}
-
-func (security Security) ParseToken(tokenString string) (*AppToken, error) {
-
+func (security Security) VerifyToken(tokenString string, tokenType TokenType) (*AppToken, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &AppToken{}, func(token *jwt.Token) (interface{}, error) {
-		// Проверяем метод подписи
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("неожиданный метод подписи: %v", token.Header["alg"])
 		}
@@ -103,11 +82,39 @@ func (security Security) ParseToken(tokenString string) (*AppToken, error) {
 	}
 
 	if claims, ok := token.Claims.(*AppToken); ok && token.Valid {
+		if claims.TokenType != tokenType {
+			return nil, ErrInvalidTokenType
+		}
 		return claims, nil
 
 	} else {
 		return nil, ErrInvalidTokenType
 
 	}
+}
 
+func (security Security) GenerateTokenToCookies(tokenType TokenType, expiresIn time.Duration, userID uuid.UUID, userRole types.Role) (*http.Cookie, error) {
+	token, err := security.GenerateToken(tokenType, expiresIn, userID, userRole)
+	if err != nil {
+		return &http.Cookie{}, err
+	}
+	return &http.Cookie{
+		Name:     JWTCookieName,
+		Value:    token,
+		Expires:  security.Now().Add(security.ExpiresInterval),
+		HttpOnly: true,
+		Path:     "/",
+		SameSite: http.SameSiteStrictMode,
+		Secure:   true,
+		MaxAge:   int(security.ExpiresInterval.Seconds()),
+	}, nil
+}
+
+func (security Security) DeleteCookie() *http.Cookie {
+	return &http.Cookie{
+		Name:    JWTCookieName,
+		Value:   "",
+		Path:    "/",
+		Expires: security.Now(),
+	}
 }

@@ -1,10 +1,10 @@
-import type { Config } from 'tailwindcss';
 import daisyui from 'daisyui';
+import type { Config } from 'tailwindcss';
 
 import typography from '@tailwindcss/typography';
 
 const config = {
-    darkMode: ['class', '[data-theme="dark"]'],
+    // darkMode: ['class', '[data-theme="dark"]'],
     daisyui: {
         themes: [
             'dark', 'nord'

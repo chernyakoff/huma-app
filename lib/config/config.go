@@ -13,10 +13,25 @@ type Storage struct {
 	Path string `yaml:"path" env-required:"false" env-default:"./storage.db"`
 }
 
+type Smtp struct {
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+	Password string `yaml:"password"`
+	From     string `yaml:"from"`
+}
+
+type FrontendUrls struct {
+	Verify string `yaml:"verify"`
+}
+
+type Frontend struct {
+	Path string       `yaml:"path" env-required:"false" env-default:"./frontend/build/index.html"`
+	Urls FrontendUrls `yaml:"urls"`
+}
+
 type Server struct {
 	Port int    `yaml:"port" env-required:"false" env-default:"8888"`
 	Host string `yaml:"host" env-required:"false" env-default:"localhost"`
-	Spa  string `yaml:"spa" env-required:"false" env-default:"./frontend/build/index.html"`
 }
 
 type Api struct {
@@ -28,10 +43,12 @@ type Secret struct {
 }
 
 type Config struct {
-	Secret  `yaml:"secret"`
-	Server  `yaml:"server"`
-	Storage `yaml:"storage"`
-	Api     `yaml:"api"`
+	Frontend `yaml:"frontend"`
+	Secret   `yaml:"secret"`
+	Server   `yaml:"server"`
+	Storage  `yaml:"storage"`
+	Api      `yaml:"api"`
+	Smtp     `yaml:"smtp" env-required:"false"`
 }
 
 var (

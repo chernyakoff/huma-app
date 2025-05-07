@@ -7,13 +7,15 @@ package store
 import (
 	"time"
 
+	"github.com/google/uuid"
 	"huma-app/store/types"
 )
 
 type User struct {
-	ID        int64      `json:"id"`
-	Email     string     `format:"email" json:"email" required:"true"`
+	ID        uuid.UUID  `json:"id"`
+	Email     string     `json:"email"`
 	Password  string     `json:"password"`
 	CreatedAt time.Time  `json:"created_at"`
 	Role      types.Role `json:"role"`
+	Verified  int64      `json:"verified"`
 }

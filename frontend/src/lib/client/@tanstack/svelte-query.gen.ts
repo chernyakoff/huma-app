@@ -2,8 +2,8 @@
 
 import type { Options } from '@hey-api/client-fetch';
 import { queryOptions, type MutationOptions } from '@tanstack/svelte-query';
-import type { LoginData, LoginError, LoginResponse, LogoutData, MeData, GetAllUsersData, CreateUserData, CreateUserError, CreateUserResponse, DeleteUserData, DeleteUserError, DeleteUserResponse } from '../types.gen';
-import { login, logout, me, getAllUsers, createUser, deleteUser, client } from '../sdk.gen';
+import type { LoginData, LoginError, LoginResponse, LogoutData, MeData, RegisterData, RegisterError, RegisterResponse, VerifyEmailData, GetAllUsersData, DeleteUserData, DeleteUserError, DeleteUserResponse } from '../types.gen';
+import { login, logout, me, register, verifyEmail, getAllUsers, deleteUser, client } from '../sdk.gen';
 
 type QueryKey<TOptions extends Options> = [
     Pick<TOptions, 'baseUrl' | 'body' | 'headers' | 'path' | 'query'> & {
@@ -103,6 +103,58 @@ export const meOptions = (options?: Options<MeData>) => {
     });
 };
 
+export const registerQueryKey = (options: Options<RegisterData>) => [
+    createQueryKey('register', options)
+];
+
+export const registerOptions = (options: Options<RegisterData>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await register({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true
+            });
+            return data;
+        },
+        queryKey: registerQueryKey(options)
+    });
+};
+
+export const registerMutation = (options?: Partial<Options<RegisterData>>) => {
+    const mutationOptions: MutationOptions<RegisterResponse, RegisterError, Options<RegisterData>> = {
+        mutationFn: async (localOptions) => {
+            const { data } = await register({
+                ...options,
+                ...localOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const verifyEmailQueryKey = (options?: Options<VerifyEmailData>) => [
+    createQueryKey('verifyEmail', options)
+];
+
+export const verifyEmailOptions = (options?: Options<VerifyEmailData>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await verifyEmail({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true
+            });
+            return data;
+        },
+        queryKey: verifyEmailQueryKey(options)
+    });
+};
+
 export const getAllUsersQueryKey = (options?: Options<GetAllUsersData>) => [
     createQueryKey('getAllUsers', options)
 ];
@@ -120,39 +172,6 @@ export const getAllUsersOptions = (options?: Options<GetAllUsersData>) => {
         },
         queryKey: getAllUsersQueryKey(options)
     });
-};
-
-export const createUserQueryKey = (options: Options<CreateUserData>) => [
-    createQueryKey('createUser', options)
-];
-
-export const createUserOptions = (options: Options<CreateUserData>) => {
-    return queryOptions({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await createUser({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true
-            });
-            return data;
-        },
-        queryKey: createUserQueryKey(options)
-    });
-};
-
-export const createUserMutation = (options?: Partial<Options<CreateUserData>>) => {
-    const mutationOptions: MutationOptions<CreateUserResponse, CreateUserError, Options<CreateUserData>> = {
-        mutationFn: async (localOptions) => {
-            const { data } = await createUser({
-                ...options,
-                ...localOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
 };
 
 export const deleteUserMutation = (options?: Partial<Options<DeleteUserData>>) => {

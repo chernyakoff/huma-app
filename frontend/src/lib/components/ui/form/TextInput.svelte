@@ -1,13 +1,14 @@
 <script lang="ts">
-	import { Field, Control, Label, FieldErrors } from 'formsnap';
-	import type { HTMLInputTypeAttribute } from 'svelte/elements';
-	import { formFieldProxy, type SuperForm } from 'sveltekit-superforms';
-	import { ucfirst } from '$lib/string';
+	import { ucfirst } from "$lib/string";
+	import { Control, Field, FieldErrors, Label } from "formsnap";
+	import type { HTMLInputTypeAttribute } from "svelte/elements";
+	import { formFieldProxy, type SuperForm } from "sveltekit-superforms";
 	let {
 		superform,
 		type,
 		name
 	}: {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		superform: SuperForm<any>;
 		type: HTMLInputTypeAttribute;
 		name: string;

@@ -1,12 +1,12 @@
 -- name: CreateUser :one
 INSERT INTO users
 (
+    id,
     email,
-    password,
-    role
+    password
 ) VALUES (
-    ?, ?, "user"
-) RETURNING id,email ;
+    ?, ?, ?
+) RETURNING id,email, role ;
 
 -- name: GetUserById :one
 SELECT id, email, role FROM users WHERE id = ? LIMIT 1;
@@ -19,3 +19,6 @@ SELECT id, email, role, created_at FROM users;
 
 -- name: DeleteUser :exec
 DELETE FROM users WHERE id = ?;
+
+-- name: VerifyUser :exec
+UPDATE users SET verified = 1 WHERE id = ?;

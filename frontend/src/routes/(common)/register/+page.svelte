@@ -1,25 +1,24 @@
 <script lang="ts">
+	import { goto } from "$app/navigation";
+	import { registerMutation } from "$lib/client/@tanstack/svelte-query.gen";
 	import TextInput from "$lib/components/ui/form/TextInput.svelte";
 	import { registerSchema } from "$lib/zod-schemas";
-	import { superForm, setMessage, setError, defaults } from "sveltekit-superforms";
-	import { zod } from "sveltekit-superforms/adapters";
-	import { createUserMutation } from "$lib/client/@tanstack/svelte-query.gen";
-	import { goto } from "$app/navigation";
 	import { createMutation } from "@tanstack/svelte-query";
-	import Title from "$lib/components/layout/Title.svelte";
+	import { superForm } from "sveltekit-superforms";
+	import { zod } from "sveltekit-superforms/adapters";
+
 	import { authState } from "$lib/states.svelte";
 
-	import * as toast from "$lib/toast";
 	import PasswordInput from "$lib/components/ui/form/PasswordInput.svelte";
-	import { fromJSON } from "postcss";
+	import * as toast from "$lib/toast";
 
 	if (authState.valid) {
 		goto("/app");
 	}
 	const mutation = createMutation({
-		...createUserMutation(),
+		...registerMutation(),
 		onSuccess() {
-			goto("/app");
+			goto("/verify");
 		},
 		onError(error) {
 			toast.error(error.detail);
@@ -38,10 +37,11 @@
 			validators: zod(registerSchema),
 			onUpdate({ form }) {
 				if (form.valid) {
+					// eslint-disable-next-line @typescript-eslint/no-unused-vars
 					const { confirmPassword, ...data } = form.data;
+					localStorage.setItem("verify", data.email);
 					$mutation.mutate({ body: data });
 				}
-				console.log(form);
 			}
 		}
 	);

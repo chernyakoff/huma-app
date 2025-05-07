@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Field, Control, Label, FieldErrors } from "formsnap";
+	import { Control, Field, FieldErrors, Label } from "formsnap";
 	import { formFieldProxy, type SuperForm } from "sveltekit-superforms";
 
 	import Icon from "@iconify/svelte";
@@ -7,6 +7,7 @@
 		superform,
 		confirm = false
 	}: {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		superform: SuperForm<any>;
 		confirm?: boolean;
 	} = $props();

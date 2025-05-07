@@ -2,7 +2,6 @@
 	import { goto } from "$app/navigation";
 	import type { GetUserByIdRow } from "$lib/client";
 	import ThemeSwap from "$lib/components/ui/ThemeSwap.svelte";
-
 	import { authState } from "$lib/states.svelte";
 	import Icon from "@iconify/svelte";
 	import type { Snippet } from "svelte";
@@ -16,7 +15,7 @@
 
 	let { children, data }: Props = $props();
 
-	if (!data) {
+	if (!data?.user) {
 		goto("/login");
 	} else {
 		authState.set(data.user);

@@ -9,3 +9,8 @@ secret:
 api:
   name: Huma API
   version: 1.0.1
+smtp:
+  host: smtp.gmail.com
+  port: 587
+  password: verrysecret
+  from: from@gmail.com

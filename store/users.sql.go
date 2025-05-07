@@ -9,34 +9,37 @@ import (
 	"context"
 	"time"
 
+	"github.com/google/uuid"
 	"huma-app/store/types"
 )
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO users
 (
+    id,
     email,
-    password,
-    role
+    password
 ) VALUES (
-    ?, ?, "user"
-) RETURNING id,email
+    ?, ?, ?
+) RETURNING id,email, role
 `
 
 type CreateUserParams struct {
-	Email    string `format:"email" json:"email" required:"true"`
-	Password string `json:"password"`
+	ID       uuid.UUID `json:"id"`
+	Email    string    `json:"email"`
+	Password string    `json:"password"`
 }
 
 type CreateUserRow struct {
-	ID    int64  `json:"id"`
-	Email string `format:"email" json:"email" required:"true"`
+	ID    uuid.UUID  `json:"id"`
+	Email string     `json:"email"`
+	Role  types.Role `json:"role"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
-	row := q.db.QueryRowContext(ctx, createUser, arg.Email, arg.Password)
+	row := q.db.QueryRowContext(ctx, createUser, arg.ID, arg.Email, arg.Password)
 	var i CreateUserRow
-	err := row.Scan(&i.ID, &i.Email)
+	err := row.Scan(&i.ID, &i.Email, &i.Role)
 	return i, err
 }
 
@@ -44,7 +47,7 @@ const deleteUser = `-- name: DeleteUser :exec
 DELETE FROM users WHERE id = ?
 `
 
-func (q *Queries) DeleteUser(ctx context.Context, id int64) error {
+func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.ExecContext(ctx, deleteUser, id)
 	return err
 }
@@ -54,8 +57,8 @@ SELECT id, email, password, role FROM users WHERE email = ? LIMIT 1
 `
 
 type GetUserByEmailRow struct {
-	ID       int64      `json:"id"`
-	Email    string     `format:"email" json:"email" required:"true"`
+	ID       uuid.UUID  `json:"id"`
+	Email    string     `json:"email"`
 	Password string     `json:"password"`
 	Role     types.Role `json:"role"`
 }
@@ -79,12 +82,12 @@ SELECT id, email, role FROM users WHERE id = ? LIMIT 1
 `
 
 type GetUserByIdRow struct {
-	ID    int64      `json:"id"`
-	Email string     `format:"email" json:"email" required:"true"`
+	ID    uuid.UUID  `json:"id"`
+	Email string     `json:"email"`
 	Role  types.Role `json:"role"`
 }
 
-func (q *Queries) GetUserById(ctx context.Context, id int64) (GetUserByIdRow, error) {
+func (q *Queries) GetUserById(ctx context.Context, id uuid.UUID) (GetUserByIdRow, error) {
 	row := q.db.QueryRowContext(ctx, getUserById, id)
 	var i GetUserByIdRow
 	err := row.Scan(&i.ID, &i.Email, &i.Role)
@@ -96,8 +99,8 @@ SELECT id, email, role, created_at FROM users
 `
 
 type GetUsersRow struct {
-	ID        int64      `json:"id"`
-	Email     string     `format:"email" json:"email" required:"true"`
+	ID        uuid.UUID  `json:"id"`
+	Email     string     `json:"email"`
 	Role      types.Role `json:"role"`
 	CreatedAt time.Time  `json:"created_at"`
 }
@@ -128,4 +131,13 @@ func (q *Queries) GetUsers(ctx context.Context) ([]GetUsersRow, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const verifyUser = `-- name: VerifyUser :exec
+UPDATE users SET verified = 1 WHERE id = ?
+`
+
+func (q *Queries) VerifyUser(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, verifyUser, id)
+	return err
 }

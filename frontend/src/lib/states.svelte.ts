@@ -17,7 +17,7 @@ class AuthState {
         return this.data?.email
     }
 
-    get id (): number | undefined {
+    get id (): string | undefined {
         return this.data?.id
     }
 

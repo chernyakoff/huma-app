@@ -1,13 +1,15 @@
 version: "3"
 
 tasks:
+  openapi:
+    cmds:
+      - go run . -spec
+      - npm run openapi-ts --prefix ./frontend
   sqlc:
     cmds:
       - sqlc generate
   frontend-dev:
-    cmds:
-      - npm run openapi-ts --prefix ./frontend
-      - npm run dev --prefix ./frontend
+    cmd: npm run dev --prefix ./frontend
     internal: true
   backend-dev:
     cmd: go run .

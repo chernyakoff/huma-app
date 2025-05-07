@@ -1,13 +1,13 @@
 <script lang="ts">
-	import '../app.css';
-	import { themeChange } from 'theme-change';
-	import { browser } from '$app/environment';
-	import { SvelteQueryDevtools } from '@tanstack/svelte-query-devtools';
-	import { QueryClient, QueryClientProvider } from '@tanstack/svelte-query';
+	import { browser } from "$app/environment";
+	import { QueryClient, QueryClientProvider } from "@tanstack/svelte-query";
+	import { SvelteQueryDevtools } from "@tanstack/svelte-query-devtools";
 
-	import { SvelteToast } from '@zerodevx/svelte-toast';
-	import type { Snippet } from 'svelte';
-	import Title from '$lib/components/layout/Title.svelte';
+	import "../app.css";
+
+	import Title from "$lib/components/layout/Title.svelte";
+	import { SvelteToast } from "@zerodevx/svelte-toast";
+	import type { Snippet } from "svelte";
 
 	const queryClient = new QueryClient({
 		defaultOptions: {
@@ -21,9 +21,6 @@
 	}
 
 	let { children }: Props = $props();
-	$effect(() => {
-		themeChange(false);
-	});
 </script>
 
 <Title />

@@ -1,5 +1,9 @@
 <script lang="ts">
-	import Icon from '@iconify/svelte';
+	import Icon from "@iconify/svelte";
+	import { themeChange } from "theme-change";
+	$effect(() => {
+		themeChange(false);
+	});
 </script>
 
 <div>

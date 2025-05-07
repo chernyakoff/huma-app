@@ -1,16 +1,15 @@
 <script lang="ts">
-	import TextInput from "$lib/components/ui/form/TextInput.svelte";
-	import { loginSchema } from "$lib/zod-schemas";
-	import { superForm, setMessage, setError, defaults } from "sveltekit-superforms";
-	import { zod } from "sveltekit-superforms/adapters";
-	import { loginMutation } from "$lib/client/@tanstack/svelte-query.gen";
 	import { goto } from "$app/navigation";
-	import { createMutation } from "@tanstack/svelte-query";
-	import Title from "$lib/components/layout/Title.svelte";
+	import { loginMutation } from "$lib/client/@tanstack/svelte-query.gen";
+	import TextInput from "$lib/components/ui/form/TextInput.svelte";
 	import { authState } from "$lib/states.svelte";
+	import { loginSchema } from "$lib/zod-schemas";
+	import { createMutation } from "@tanstack/svelte-query";
+	import { superForm } from "sveltekit-superforms";
+	import { zod } from "sveltekit-superforms/adapters";
 
-	import * as toast from "$lib/toast";
 	import PasswordInput from "$lib/components/ui/form/PasswordInput.svelte";
+	import * as toast from "$lib/toast";
 
 	if (authState.valid) {
 		goto("/app");
